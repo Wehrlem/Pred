@@ -1,0 +1,93 @@
+---
+title: "PracMach"
+author: "Marcel Wehrle"
+date: "27. Dezember 2015"
+output: html_document
+---
+# Course Project - Pratical Machine Learning
+## Executive Summary
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, the goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways.
+
+## Load the libs
+```{r,results="hide"}
+library(caret)
+library(randomForest)
+library(tree)
+library(ggplot2)
+```
+## Load the data
+```{r,results="hide"}
+train.url <- 'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv'
+train.name <- 'pml-train'
+test.url <- 'https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv'
+test.name <- 'pml-test'
+# online load the data once
+if(!file.exists(train.name)){download.file(train.url,train.name, method = 'curl')}
+if(!file.exists(test.name)){download.file(test.url,test.name, method = 'curl')}
+#Load the csv
+train.data <- read.csv(train.name,header = T,na.strings = c('NA',''))
+train.data$classe <- as.factor(train.data$classe)
+test.data <- read.csv(test.name,header = T,na.strings = c('NA',''))
+```
+## Preprocess the data
+# Remove the columns that contain missing values
+```{r}
+
+train.noNA <- train.data[,colSums(is.na(train.data))==0]
+test.noNA <- test.data[,colSums(is.na(test.data))==0]
+
+```
+# Remove all the unnecessairy colums
+```{r}
+
+removeCol <- function(x){grepl('^X|timestamp|window',names(x))}
+train.cleaned <- train.noNA[,!removeCol(train.noNA)]
+test.cleaned <- test.noNA[,!removeCol(test.noNA)]
+dim(train.cleaned)
+```
+# Look for variables that are highly corelated 
+```{r}
+#create a cormatrix
+corMatrix <- cor(na.omit(train.cleaned[sapply(train.cleaned, is.numeric)]))
+# remove highly correlated variables
+removeCorCol <- findCorrelation(corMatrix,cutoff = 0.9,verbose = F)
+train.redCor <- train.cleaned[,-removeCorCol]
+dim(train.redCor)
+```
+By this a reduction to 46 variables is possible
+
+# Split the data into subtrain and subtest
+```{r}
+
+splitTrain <- createDataPartition(y=train.redCor$classe, p=0.7, list = F)
+train.finalTrain <- train.redCor[splitTrain,]
+train.finalCV <- train.redCor[-splitTrain,]
+dim(train.finalTrain)
+dim(train.finalCV)
+```
+# Train the model
+## With randomForest. Crossvalidation trough train control methodology.
+```{r}
+modFit <- train(classe~.,method='rf',data=train.finalTrain,trControl=trainControl(method='cv',5),ntree=250, allowParallel=T)
+
+```
+## Accurancy on the training set:
+
+```{r}
+
+trainPre <- predict(modFit,train.finalTrain)
+confusionMatrix(trainPre,train.finalTrain$classe)
+```
+## Accurancy on the crossvalidation set:
+```{r}
+crossvalPre <- predict(modFit,train.finalCV)
+confusionMatrix(crossvalPre,train.finalCV$classe)
+
+```
+## Results
+```{r}
+answers <- predict(modFit,test.cleaned)
+answers
+```
+
+
