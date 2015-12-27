@@ -105,23 +105,21 @@ test.data &lt;- read.csv(test.name,header = T,na.strings = c('NA',''))</code></p
 </div>
 <div id="preprocess-the-data" class="section level2">
 <h2>Preprocess the data</h2>
-</div>
-</div>
-<div id="remove-the-columns-that-contain-missing-values" class="section level1">
-<h1>Remove the columns that contain missing values</h1>
+<div id="remove-the-columns-that-contain-missing-values" class="section level3">
+<h3>Remove the columns that contain missing values</h3>
 <pre class="r"><code>train.noNA &lt;- train.data[,colSums(is.na(train.data))==0]
 test.noNA &lt;- test.data[,colSums(is.na(test.data))==0]</code></pre>
 </div>
-<div id="remove-all-the-unnecessairy-colums" class="section level1">
-<h1>Remove all the unnecessairy colums</h1>
+<div id="remove-all-the-unnecessairy-colums" class="section level3">
+<h3>Remove all the unnecessairy colums</h3>
 <pre class="r"><code>removeCol &lt;- function(x){grepl('^X|timestamp|window',names(x))}
 train.cleaned &lt;- train.noNA[,!removeCol(train.noNA)]
 test.cleaned &lt;- test.noNA[,!removeCol(test.noNA)]
 dim(train.cleaned)</code></pre>
 <pre><code>## [1] 19622    54</code></pre>
 </div>
-<div id="look-for-variables-that-are-highly-corelated" class="section level1">
-<h1>Look for variables that are highly corelated</h1>
+<div id="look-for-variables-that-are-highly-corelated" class="section level3">
+<h3>Look for variables that are highly corelated</h3>
 <pre class="r"><code>#create a cormatrix
 corMatrix &lt;- cor(na.omit(train.cleaned[sapply(train.cleaned, is.numeric)]))
 # remove highly correlated variables
@@ -131,8 +129,9 @@ dim(train.redCor)</code></pre>
 <pre><code>## [1] 19622    47</code></pre>
 <p>By this a reduction to 46 variables is possible</p>
 </div>
-<div id="split-the-data-into-subtrain-and-subtest" class="section level1">
-<h1>Split the data into subtrain and subtest</h1>
+</div>
+<div id="split-the-data-into-subtrain-and-subtest" class="section level2">
+<h2>Split the data into subtrain and subtest</h2>
 <pre class="r"><code>splitTrain &lt;- createDataPartition(y=train.redCor$classe, p=0.7, list = F)
 train.finalTrain &lt;- train.redCor[splitTrain,]
 train.finalCV &lt;- train.redCor[-splitTrain,]
@@ -141,10 +140,9 @@ dim(train.finalTrain)</code></pre>
 <pre class="r"><code>dim(train.finalCV)</code></pre>
 <pre><code>## [1] 5885   47</code></pre>
 </div>
-<div id="train-the-model" class="section level1">
-<h1>Train the model</h1>
-<div id="with-randomforest.-crossvalidation-trough-train-control-methodology." class="section level2">
-<h2>With randomForest. Crossvalidation trough train control methodology.</h2>
+<div id="train-the-model" class="section level2">
+<h2>Train the model</h2>
+<p>With randomForest. Crossvalidation trough train control methodology.</p>
 <pre class="r"><code>modFit &lt;- train(classe~.,method='rf',data=train.finalTrain,trControl=trainControl(method='cv',5),ntree=250, allowParallel=T)</code></pre>
 </div>
 <div id="accurancy-on-the-training-set" class="section level2">
@@ -191,36 +189,34 @@ confusionMatrix(crossvalPre,train.finalCV$classe)</code></pre>
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1669    6    0    0    0
-##          B    2 1126    4    0    2
-##          C    3    5 1018   10    4
-##          D    0    2    4  953    7
-##          E    0    0    0    1 1069
+##          A 1674    5    0    0    0
+##          B    0 1129    2    0    0
+##          C    0    5 1022   19    1
+##          D    0    0    2  945    4
+##          E    0    0    0    0 1077
 ## 
 ## Overall Statistics
 ##                                           
-##                Accuracy : 0.9915          
-##                  95% CI : (0.9888, 0.9937)
+##                Accuracy : 0.9935          
+##                  95% CI : (0.9911, 0.9954)
 ##     No Information Rate : 0.2845          
 ##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
 ##                                           
-##                   Kappa : 0.9893          
+##                   Kappa : 0.9918          
 ##  Mcnemar's Test P-Value : NA              
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.9970   0.9886   0.9922   0.9886   0.9880
-## Specificity            0.9986   0.9983   0.9955   0.9974   0.9998
-## Pos Pred Value         0.9964   0.9929   0.9788   0.9865   0.9991
-## Neg Pred Value         0.9988   0.9973   0.9983   0.9978   0.9973
+## Sensitivity            1.0000   0.9912   0.9961   0.9803   0.9954
+## Specificity            0.9988   0.9996   0.9949   0.9988   1.0000
+## Pos Pred Value         0.9970   0.9982   0.9761   0.9937   1.0000
+## Neg Pred Value         1.0000   0.9979   0.9992   0.9961   0.9990
 ## Prevalence             0.2845   0.1935   0.1743   0.1638   0.1839
-## Detection Rate         0.2836   0.1913   0.1730   0.1619   0.1816
-## Detection Prevalence   0.2846   0.1927   0.1767   0.1641   0.1818
-## Balanced Accuracy      0.9978   0.9935   0.9938   0.9930   0.9939</code></pre>
-</div>
-<div id="results" class="section level2">
-<h2>Results</h2>
+## Detection Rate         0.2845   0.1918   0.1737   0.1606   0.1830
+## Detection Prevalence   0.2853   0.1922   0.1779   0.1616   0.1830
+## Balanced Accuracy      0.9994   0.9954   0.9955   0.9895   0.9977</code></pre>
+<p>So as shown in the confusion matrix, the estimated accurancy is 99.42 % and the out of the sample error is 0.58% ## Results</p>
 <pre class="r"><code>answers &lt;- predict(modFit,test.cleaned)
 answers</code></pre>
 <pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B

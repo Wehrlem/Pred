@@ -30,14 +30,14 @@ train.data$classe <- as.factor(train.data$classe)
 test.data <- read.csv(test.name,header = T,na.strings = c('NA',''))
 ```
 ## Preprocess the data
-# Remove the columns that contain missing values
+### Remove the columns that contain missing values
 ```{r}
 
 train.noNA <- train.data[,colSums(is.na(train.data))==0]
 test.noNA <- test.data[,colSums(is.na(test.data))==0]
 
 ```
-# Remove all the unnecessairy colums
+### Remove all the unnecessairy colums
 ```{r}
 
 removeCol <- function(x){grepl('^X|timestamp|window',names(x))}
@@ -45,7 +45,7 @@ train.cleaned <- train.noNA[,!removeCol(train.noNA)]
 test.cleaned <- test.noNA[,!removeCol(test.noNA)]
 dim(train.cleaned)
 ```
-# Look for variables that are highly corelated 
+### Look for variables that are highly corelated 
 ```{r}
 #create a cormatrix
 corMatrix <- cor(na.omit(train.cleaned[sapply(train.cleaned, is.numeric)]))
@@ -56,7 +56,7 @@ dim(train.redCor)
 ```
 By this a reduction to 46 variables is possible
 
-# Split the data into subtrain and subtest
+## Split the data into subtrain and subtest
 ```{r}
 
 splitTrain <- createDataPartition(y=train.redCor$classe, p=0.7, list = F)
@@ -65,8 +65,8 @@ train.finalCV <- train.redCor[-splitTrain,]
 dim(train.finalTrain)
 dim(train.finalCV)
 ```
-# Train the model
-## With randomForest. Crossvalidation trough train control methodology.
+## Train the model
+With randomForest. Crossvalidation trough train control methodology.
 ```{r}
 modFit <- train(classe~.,method='rf',data=train.finalTrain,trControl=trainControl(method='cv',5),ntree=250, allowParallel=T)
 
@@ -84,6 +84,7 @@ crossvalPre <- predict(modFit,train.finalCV)
 confusionMatrix(crossvalPre,train.finalCV$classe)
 
 ```
+So as shown in the confusion matrix, the estimated accurancy is 99.42 % and the out of the sample error is 0.58%
 ## Results
 ```{r}
 answers <- predict(modFit,test.cleaned)
